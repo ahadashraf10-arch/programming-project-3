@@ -5,7 +5,7 @@
 #define MAX 100
 #define FILE_NAME "movies.txt"
 
-/* -------- COLORS -------- */
+
 #define GREEN "\033[1;32m"
 #define RED   "\033[1;31m"
 #define RESET "\033[0m"
@@ -27,7 +27,7 @@ int availableCount = 5;
 struct Movie watched[MAX];
 int watchedCount = 0;
 
-/* -------- THE FIXES -------- */
+
 
 void clearScreen() {
 
@@ -49,7 +49,7 @@ void pause() {
     getchar(); 
 }
 
-/* -------- DATA HANDLERS -------- */
+
 
 void loadFromFile() {
     FILE *f = fopen(FILE_NAME, "r");
@@ -73,7 +73,7 @@ void saveToFile() {
     fclose(f);
 }
 
-/* -------- MAIN PROGRAM -------- */
+
 
 int main() {
     int choice;
