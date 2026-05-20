@@ -5,7 +5,7 @@
 #define MAX 100
 #define FILE_NAME "movies.txt"
 
-
+/* -------- COLORS -------- */
 #define GREEN "\033[1;32m"
 #define RED   "\033[1;31m"
 #define RESET "\033[0m"
@@ -27,13 +27,10 @@ int availableCount = 5;
 struct Movie watched[MAX];
 int watchedCount = 0;
 
-
+/* -------- UTILITIES -------- */
 
 void clearScreen() {
-
     printf("\033[H\033[2J");
-    
-    
     #ifdef _WIN32
         system("cls");
     #else
@@ -41,15 +38,18 @@ void clearScreen() {
     #endif
 }
 
-void pause() {
-    printf("\n" GREEN "Press [Enter] to return to menu..." RESET);
-    
+// Clears leftover characters in the buffer to prevent skipping inputs
+void clearBuffer() {
     int c;
-    while ((c = getchar()) != '\n' && c != EOF); 
-    getchar(); 
+    while ((c = getchar()) != '\n' && c != EOF);
 }
 
+void pause() {
+    printf("\n" GREEN "Press [Enter] to return to menu..." RESET);
+    clearBuffer();
+}
 
+/* -------- DATA HANDLERS -------- */
 
 void loadFromFile() {
     FILE *f = fopen(FILE_NAME, "r");
@@ -73,7 +73,7 @@ void saveToFile() {
     fclose(f);
 }
 
-
+/* -------- MAIN PROGRAM -------- */
 
 int main() {
     int choice;
@@ -82,10 +82,10 @@ int main() {
     while (1) {
         clearScreen();
         printf("===============================\n");
-        printf("        MOVIE MANAGER         \n");
+        printf("         MOVIE MANAGER         \n");
         printf("===============================\n");
-        printf("1. View Available Movies\n");
-        printf("2. View Watched Movies\n");
+        printf("1. View " RED "Available" RESET " Movies\n");
+        printf("2. View " GREEN "Watched" RESET " Movies\n");
         printf("3. Add Movie to Watched\n");
         printf("4. Delete from Watched\n");
         printf("0. Save & Exit\n");
@@ -94,10 +94,13 @@ int main() {
 
         if (scanf("%d", &choice) != 1) {
             printf(RED "Invalid input! Use numbers only.\n" RESET);
-            int c; while ((c = getchar()) != '\n' && c != EOF); 
-            pause();
+            clearBuffer();
+            printf("\nPress [Enter] to try again...");
+            getchar();
             continue;
         }
+        // Consume the newline left by scanf to prevent it hitting the next input
+        getchar(); 
 
         if (choice == 0) {
             saveToFile();
@@ -109,31 +112,40 @@ int main() {
 
         switch (choice) {
             case 1:
-                printf("===== AVAILABLE MOVIES =====\n\n");
+                printf("===== " RED "AVAILABLE MOVIES (TO WATCH)" RESET " =====\n\n");
                 for (int i = 0; i < availableCount; i++) {
-                    printf("%d. %s (%d min)\n   %s\n\n", i+1, available[i].title, available[i].duration, available[i].description);
+                    printf(RED "%d. %s (%d min)\n" RESET "   %s\n\n", 
+                           i+1, available[i].title, available[i].duration, available[i].description);
                 }
                 break;
 
             case 2:
-                printf("===== WATCHED MOVIES =====\n\n");
-                if (watchedCount == 0) printf("Your list is empty.\n");
-                for (int i = 0; i < watchedCount; i++) {
-                    printf("%d. %s (%d min)\n", i+1, watched[i].title, watched[i].duration);
+                printf("===== " GREEN "WATCHED MOVIES" RESET " =====\n\n");
+                if (watchedCount == 0) {
+                    printf("Your list is empty.\n");
+                } else {
+                    for (int i = 0; i < watchedCount; i++) {
+                        printf(GREEN "%d. %s (%d min)\n" RESET, 
+                               i+1, watched[i].title, watched[i].duration);
+                    }
                 }
                 break;
 
             case 3:
                 printf("===== ADD TO WATCHED =====\n\n");
-                for (int i = 0; i < availableCount; i++) printf("%d. %s\n", i+1, available[i].title);
-                printf("\nSelect movie number: ");
-                int addIdx;
-                if (scanf("%d", &addIdx) == 1 && addIdx > 0 && addIdx <= availableCount) {
-                    watched[watchedCount++] = available[addIdx-1];
-                    saveToFile();
-                    printf(GREEN "\nAdded successfully!" RESET);
+                if (watchedCount >= MAX) {
+                    printf(RED "Error: Watched list is full!\n" RESET);
                 } else {
-                    printf(RED "\nInvalid selection!" RESET);
+                    for (int i = 0; i < availableCount; i++) printf("%d. %s\n", i+1, available[i].title);
+                    printf("\nSelect movie number: ");
+                    int addIdx;
+                    if (scanf("%d", &addIdx) == 1 && addIdx > 0 && addIdx <= availableCount) {
+                        watched[watchedCount++] = available[addIdx-1];
+                        saveToFile();
+                        printf(GREEN "\nAdded successfully!" RESET);
+                    } else {
+                        printf(RED "\nInvalid selection!" RESET);
+                    }
                 }
                 break;
 
@@ -146,10 +158,14 @@ int main() {
                     printf("\nSelect number to delete: ");
                     int delIdx;
                     if (scanf("%d", &delIdx) == 1 && delIdx > 0 && delIdx <= watchedCount) {
-                        for (int i = delIdx-1; i < watchedCount-1; i++) watched[i] = watched[i+1];
+                        for (int i = delIdx-1; i < watchedCount-1; i++) {
+                            watched[i] = watched[i+1];
+                        }
                         watchedCount--;
                         saveToFile();
                         printf(GREEN "\nDeleted successfully!" RESET);
+                    } else {
+                        printf(RED "\nInvalid selection!" RESET);
                     }
                 }
                 break;
