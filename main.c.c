@@ -108,7 +108,7 @@ void addMovieToWatched() {
         printf("%d. %s\n", i + 1, available[i].title);
     }
     
-    // Validation: Explicitly stating expected numerical bounds
+    // Validation: numerical bounds
     printf("\nSelect movie number (1-%d): ", availableCount);
     int addIdx;
     if (scanf("%d", &addIdx) == 1 && addIdx > 0 && addIdx <= availableCount) {
@@ -167,7 +167,7 @@ int main() {
         printf("0. Save & Exit\n");
         printf("-------------------------------\n");
         
-        // Validation: Explicit format constraint requested in prompt
+        // Validation:
         printf("Choice (0-4): ");
 
         if (scanf("%d", &choice) != 1) {
