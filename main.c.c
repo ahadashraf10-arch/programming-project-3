@@ -38,14 +38,13 @@ void clearScreen() {
     #endif
 }
 
-// Clears leftover characters in the buffer to prevent skipping inputs
 void clearBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
 void pause() {
-    printf("\n" GREEN "Press [Enter] to return to menu..." RESET);
+    printf("\nPress [" GREEN "Enter" RESET "] to return to menu...");
     clearBuffer();
 }
 
@@ -73,6 +72,83 @@ void saveToFile() {
     fclose(f);
 }
 
+/* -------- CORE LOGIC FUNCTIONS -------- */
+
+// Extracted View Available Logic - Colors only the title element
+void viewAvailable() {
+    printf("===== AVAILABLE MOVIES (TO WATCH) =====\n\n");
+    for (int i = 0; i < availableCount; i++) {
+        printf("%d. " RED "%s" RESET " (%d min)\n   %s\n\n", 
+               i + 1, available[i].title, available[i].duration, available[i].description);
+    }
+}
+
+// Extracted View Watched Logic - Colors only the title element
+void viewWatched() {
+    printf("===== WATCHED MOVIES =====\n\n");
+    if (watchedCount == 0) {
+        printf("Your list is empty.\n");
+    } else {
+        for (int i = 0; i < watchedCount; i++) {
+            printf("%d. " GREEN "%s" RESET " (%d min)\n", 
+                   i + 1, watched[i].title, watched[i].duration);
+        }
+    }
+}
+
+// Extracted Core Add Logic
+void addMovieToWatched() {
+    printf("===== ADD TO WATCHED =====\n\n");
+    if (watchedCount >= MAX) {
+        printf(RED "Error: " RESET "Watched list is full!\n");
+        return;
+    }
+    
+    for (int i = 0; i < availableCount; i++) {
+        printf("%d. %s\n", i + 1, available[i].title);
+    }
+    
+    // Validation: Explicitly stating expected numerical bounds
+    printf("\nSelect movie number (1-%d): ", availableCount);
+    int addIdx;
+    if (scanf("%d", &addIdx) == 1 && addIdx > 0 && addIdx <= availableCount) {
+        watched[watchedCount++] = available[addIdx - 1];
+        saveToFile();
+        printf("\nMovie updated status to " GREEN "Added successfully!" RESET "\n");
+    } else {
+        printf("\n" RED "Invalid selection!" RESET " Please use digits in the requested range.\n");
+        clearBuffer(); // Keep buffer clean after failure
+    }
+}
+
+// Extracted Core Delete Logic
+void deleteMovieFromWatched() {
+    printf("===== DELETE WATCHED =====\n\n");
+    if (watchedCount == 0) {
+        printf("Nothing to delete.\n");
+        return;
+    }
+    
+    for (int i = 0; i < watchedCount; i++) {
+        printf("%d. %s\n", i + 1, watched[i].title);
+    }
+    
+    // Validation: Explicitly stating expected numerical bounds
+    printf("\nSelect number to delete (1-%d): ", watchedCount);
+    int delIdx;
+    if (scanf("%d", &delIdx) == 1 && delIdx > 0 && delIdx <= watchedCount) {
+        for (int i = delIdx - 1; i < watchedCount - 1; i++) {
+            watched[i] = watched[i + 1];
+        }
+        watchedCount--;
+        saveToFile();
+        printf("\nMovie updated status to " GREEN "Deleted successfully!" RESET "\n");
+    } else {
+        printf("\n" RED "Invalid selection!" RESET " Please use digits in the requested range.\n");
+        clearBuffer();
+    }
+}
+
 /* -------- MAIN PROGRAM -------- */
 
 int main() {
@@ -84,94 +160,40 @@ int main() {
         printf("===============================\n");
         printf("         MOVIE MANAGER         \n");
         printf("===============================\n");
-        printf("1. View " RED "Available" RESET " Movies\n");
-        printf("2. View " GREEN "Watched" RESET " Movies\n");
+        printf("1. View Available Movies\n");
+        printf("2. View Watched Movies\n");
         printf("3. Add Movie to Watched\n");
         printf("4. Delete from Watched\n");
         printf("0. Save & Exit\n");
         printf("-------------------------------\n");
-        printf("Choice: ");
+        
+        // Validation: Explicit format constraint requested in prompt
+        printf("Choice (0-4): ");
 
         if (scanf("%d", &choice) != 1) {
-            printf(RED "Invalid input! Use numbers only.\n" RESET);
+            printf("\n" RED "Invalid input!" RESET " Use integers matching options only.\n");
             clearBuffer();
-            printf("\nPress [Enter] to try again...");
+            printf("\nPress [" GREEN "Enter" RESET "] to try again...");
             getchar();
             continue;
         }
-        // Consume the newline left by scanf to prevent it hitting the next input
         getchar(); 
 
         if (choice == 0) {
             saveToFile();
-            printf(GREEN "Data saved. Goodbye!\n" RESET);
+            printf("\nData updated. " GREEN "Goodbye!" RESET "\n");
             break;
         }
 
         clearScreen(); 
 
         switch (choice) {
-            case 1:
-                printf("===== " RED "AVAILABLE MOVIES (TO WATCH)" RESET " =====\n\n");
-                for (int i = 0; i < availableCount; i++) {
-                    printf(RED "%d. %s (%d min)\n" RESET "   %s\n\n", 
-                           i+1, available[i].title, available[i].duration, available[i].description);
-                }
-                break;
-
-            case 2:
-                printf("===== " GREEN "WATCHED MOVIES" RESET " =====\n\n");
-                if (watchedCount == 0) {
-                    printf("Your list is empty.\n");
-                } else {
-                    for (int i = 0; i < watchedCount; i++) {
-                        printf(GREEN "%d. %s (%d min)\n" RESET, 
-                               i+1, watched[i].title, watched[i].duration);
-                    }
-                }
-                break;
-
-            case 3:
-                printf("===== ADD TO WATCHED =====\n\n");
-                if (watchedCount >= MAX) {
-                    printf(RED "Error: Watched list is full!\n" RESET);
-                } else {
-                    for (int i = 0; i < availableCount; i++) printf("%d. %s\n", i+1, available[i].title);
-                    printf("\nSelect movie number: ");
-                    int addIdx;
-                    if (scanf("%d", &addIdx) == 1 && addIdx > 0 && addIdx <= availableCount) {
-                        watched[watchedCount++] = available[addIdx-1];
-                        saveToFile();
-                        printf(GREEN "\nAdded successfully!" RESET);
-                    } else {
-                        printf(RED "\nInvalid selection!" RESET);
-                    }
-                }
-                break;
-
-            case 4:
-                printf("===== DELETE WATCHED =====\n\n");
-                if (watchedCount == 0) {
-                    printf("Nothing to delete.\n");
-                } else {
-                    for (int i = 0; i < watchedCount; i++) printf("%d. %s\n", i+1, watched[i].title);
-                    printf("\nSelect number to delete: ");
-                    int delIdx;
-                    if (scanf("%d", &delIdx) == 1 && delIdx > 0 && delIdx <= watchedCount) {
-                        for (int i = delIdx-1; i < watchedCount-1; i++) {
-                            watched[i] = watched[i+1];
-                        }
-                        watchedCount--;
-                        saveToFile();
-                        printf(GREEN "\nDeleted successfully!" RESET);
-                    } else {
-                        printf(RED "\nInvalid selection!" RESET);
-                    }
-                }
-                break;
-
+            case 1: viewAvailable(); break;
+            case 2: viewWatched(); break;
+            case 3: addMovieToWatched(); break;
+            case 4: deleteMovieFromWatched(); break;
             default:
-                printf(RED "Option not found." RESET);
+                printf(RED "Option not found." RESET " Pick an available option inside range.\n");
                 break;
         }
 
